@@ -7,6 +7,7 @@
 // @include     http*://*wanikani.com/level/*/kanji/*
 // @include     http*://*wanikani.com/review/session
 // @include     http*://*wanikani.com/lesson/session
+// @include     http*://*wanikani.com/settings/*
 // @copyright   2018+, Norman Sue
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-end
