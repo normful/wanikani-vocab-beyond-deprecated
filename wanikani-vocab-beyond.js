@@ -454,9 +454,9 @@ function doInsertIntoPage(wkof, settings) {
 function determinePageType() {
   if (/\/kanji\/./.test(document.URL)) {
     curPage = PageEnum.kanji;
-  } else if (/\/review/.test(document.URL)) {
+  } else if (/\/review\/session/.test(document.URL)) {
     curPage = PageEnum.reviews;
-  } else if (/\/lesson/.test(document.URL)) {
+  } else if (/\/lesson\/session/.test(document.URL)) {
     curPage = PageEnum.lessons;
   }
 }
