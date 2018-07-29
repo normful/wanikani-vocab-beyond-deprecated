@@ -217,6 +217,9 @@ var legendLinkID = 'wkvb_legend_link';
 var settingsLinkName = 'wkvb_forvo_api_key_settings';
 var settings_script_id = 'wanikani_vocab_beyond_settings';
 
+var forvoUserWhitelist = [''];
+var EMPTY_FORVO_USER_WHITELIST = JSON.stringify(forvoUserWhitelist);
+
 var Log = {
   prefix: logPrefix,
   debug: function(string) {
@@ -357,6 +360,27 @@ function onSettingsMenuLinkClick(wkof) {
             default: 0,
             full_width: false,
           },
+
+          forvo_divider_id_2: {
+            type: 'divider',
+          },
+
+          forvo_whitelist_instructions: {
+            type: 'html',
+            html:
+              '<p>Comma-separated list of Forvo users whose pronunciations should be shown. If blank, pronunciations from all users are shown.</p>',
+          },
+
+          forvo_username_whitelist_csv: {
+            type: 'text',
+            label: 'Favorite Forvo users',
+            full_width: true,
+            placeholder:
+              'skent,usako_usagiclub,strawberrybrown,poyotan,kaoring',
+            default: '',
+            hover_tip:
+              'A comma-separated list of Forvo usernames whose pronunciations should be shown',
+          },
         },
       },
 
@@ -412,6 +436,20 @@ function onSettingsMenuLinkClick(wkof) {
             label: 'Only show link in legend',
             hover_tip:
               'Only show a link to the WWWJDIC abbreviations page in the legend.',
+            default: false,
+            full_width: false,
+          },
+
+          appearance_instructions_3: {
+            type: 'html',
+            html:
+              '<p>Check the box below to show Forvo usernames above audio clips.</p>',
+          },
+
+          show_forvo_usernames: {
+            type: 'checkbox',
+            label: 'Show Forvo usernames',
+            hover_tip: 'Show Forvo usernames above each audio clip',
             default: false,
             full_width: false,
           },
@@ -700,6 +738,8 @@ function onWwwJdicResponse(res, section, showMessage, settings) {
   // Clear loading text
   section.text('');
 
+  populateForvoUserWhitelist(settings);
+
   lines.forEach(function(line, i) {
     var trimmedLine = line.trim();
 
@@ -842,6 +882,13 @@ function extractJpVocabText(jpText) {
   return matches[0];
 }
 
+function populateForvoUserWhitelist(settings) {
+  forvoUserWhitelist = settings.forvo_username_whitelist_csv
+    .trim()
+    .replace(/ /g, '')
+    .split(',');
+}
+
 function callForvoApiAsync(jpVocabText, settings) {
   if (!settings.forvo_api_key) {
     return;
@@ -879,7 +926,7 @@ function callForvoApiAsync(jpVocabText, settings) {
   });
 }
 
-function handleForvoSuccess(listItem, res) {
+function handleForvoSuccess(res, listItem, settings) {
   if (!listItem) {
     Log.error('listItem missing');
     return;
@@ -906,15 +953,49 @@ function handleForvoSuccess(listItem, res) {
       return;
     }
 
+    if (!forvoItem.username) {
+      Log.error('!forvoItem.username');
+      return;
+    }
+
+    if (
+      JSON.stringify(forvoUserWhitelist) !== EMPTY_FORVO_USER_WHITELIST &&
+      !forvoUserWhitelist.includes(forvoItem.username)
+    ) {
+      Log.info('skipping pronunciation from ' + forvoItem.username);
+      return;
+    }
+
+    var audioContainer = $('<div>');
+    audioContainer.css('fontSize', '12px');
+    audioContainer.css('display', 'inline-block');
+    audioContainer.css('box-sizing', 'border-box');
+    audioContainer.css('width', '250px');
+    audioContainer.css('margin-top', '0');
+    audioContainer.css('margin-right', '5px');
+    audioContainer.css('margin-bottom', '5px');
+    audioContainer.css('margin-left', '0');
+    audioContainer.css('padding', '0');
+
     var audioEl = document.createElement('audio');
     audioEl.src = forvoItem.pathmp3;
     audioEl.controls = 'controls';
     audioEl.preload = 'none';
     audioEl.type = 'audio/mpeg';
     audioEl.style.width = '250px';
-    audioEl.style.marginRight = '5px';
 
-    audioSection.append(audioEl);
+    if (settings.show_forvo_usernames) {
+      var usernameEl = $('<span>');
+      usernameEl.text(forvoItem.username);
+      usernameEl.css('fontSize', '14px');
+      usernameEl.css('color', '#cccccc');
+      usernameEl.css('margin', '0');
+      usernameEl.css('padding', '0');
+      audioContainer.prepend(usernameEl);
+    }
+
+    audioContainer.append(audioEl);
+    audioSection.append(audioContainer);
   });
 
   listItem.append(audioSection);
@@ -927,7 +1008,7 @@ function addForvoAudioForThisWord(jpVocabText, listItem, settings) {
       if (!res) {
         return Promise.reject('responseText missing');
       }
-      handleForvoSuccess(listItem, res);
+      handleForvoSuccess(res, listItem, settings);
     })
     .catch(function(e) {
       Log.error('Forvo API error', e);
