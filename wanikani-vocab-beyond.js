@@ -259,7 +259,7 @@ function init() {
       });
 
       wkof.Settings.load(settings_script_id).then(function(settings) {
-        doInsertIntoPage(wkof, settings);
+        doInsertIntoPage(settings);
       });
     });
   });
@@ -424,17 +424,17 @@ function onSettingsMenuLinkClick(wkof) {
 
 function onSettingsSave(wkof) {
   var updatedSettings = wkof.settings[settings_script_id];
-  loadVocab(wkof, updatedSettings);
+  loadVocab(updatedSettings);
 }
 
-function doInsertIntoPage(wkof, settings) {
+function doInsertIntoPage(settings) {
   determinePageType();
 
   if (curPage === PageEnum.unknown) {
     return;
   }
 
-  unsafeWindow[windowProp] = createEmptyVocabSection(wkof, settings);
+  unsafeWindow[windowProp] = createEmptyVocabSection(settings);
 
   var o;
   switch (curPage) {
@@ -442,7 +442,7 @@ function doInsertIntoPage(wkof, settings) {
       if (!settings.show_vocab_beyond_at_top) {
         addPageListHeaderLink();
       }
-      loadVocab(wkof, settings);
+      loadVocab(settings);
       break;
     case PageEnum.reviews:
       o = new MutationObserver(function(mutations) {
@@ -450,10 +450,10 @@ function doInsertIntoPage(wkof, settings) {
 
         if (getKanji() !== null) {
           setTimeout(function() {
-            var vs = createEmptyVocabSection(wkof, settings);
+            var vs = createEmptyVocabSection(settings);
             if (vs !== null && vs.length > 0) {
               unsafeWindow[windowProp] = vs;
-              loadVocab(wkof, settings);
+              loadVocab(settings);
             }
           }, 150);
         }
@@ -462,11 +462,11 @@ function doInsertIntoPage(wkof, settings) {
       break;
     case PageEnum.lessons:
       // TODO: Ensure this stuff all works for lessons
-      o = new MutationObserver(loadVocab.bind(null, wkof, settings));
+      o = new MutationObserver(loadVocab.bind(null, settings));
       o.observe(document.getElementById('supplement-kan'), {
         attributes: true,
       });
-      loadVocab(wkof, settings);
+      loadVocab(settings);
       break;
   }
 }
@@ -519,7 +519,7 @@ function getKanji() {
 }
 
 // Creates a section for the vocab and returns a pointer to the jQuery object.
-function createEmptyVocabSection(wkof, settings) {
+function createEmptyVocabSection(settings) {
   if ($('#' + sectionID).length == 0) {
     var sectionHTML =
       '<section>' +
@@ -612,7 +612,7 @@ function createLegend(headerEl, settings) {
 }
 
 // Queries the WWWJDIC server for the vocab and displays it the section
-function loadVocab(wkof, settings) {
+function loadVocab(settings) {
   if (!unsafeWindow) {
     return;
   }
@@ -646,7 +646,7 @@ function loadVocab(wkof, settings) {
         return;
       }
 
-      onWwwJdicResponse(xhr.responseText, section, showMessage);
+      onWwwJdicResponse(xhr.responseText, section, showMessage, settings);
     },
     onerror: function(err) {
       Log.error('WWWJDIC onerror XHR', err);
@@ -683,7 +683,7 @@ function makeWwwjdicUrl(kanji, settings) {
   );
 }
 
-function onWwwJdicResponse(res, section, showMessage) {
+function onWwwJdicResponse(res, section, showMessage, settings) {
   if (res.indexOf('No matches were found for this key') > -1) {
     showMessage('No vocab available.');
     return;
@@ -782,7 +782,7 @@ function onWwwJdicResponse(res, section, showMessage) {
 
     if (!DISABLE_FORVO) {
       var jpVocabText = extractJpVocabText(jpText);
-      addForvoAudioForThisWord(jpVocabText, listItem, wkof);
+      addForvoAudioForThisWord(jpVocabText, listItem, settings);
     }
   });
 
@@ -918,20 +918,18 @@ function handleForvoSuccess(listItem, res) {
   listItem.append(audioSection);
 }
 
-function addForvoAudioForThisWord(jpVocabText, listItem, wkof) {
-  wkof.Settings.load(settings_script_id).then(function(settings) {
-    callForvoApiAsync(jpVocabText, settings)
-      .then(function(xhr) {
-        var res = xhr.responseText;
-        if (!res) {
-          return Promise.reject('responseText missing');
-        }
-        handleForvoSuccess(listItem, res);
-      })
-      .catch(function(e) {
-        Log.error('Forvo API error', e);
-      });
-  });
+function addForvoAudioForThisWord(jpVocabText, listItem, settings) {
+  callForvoApiAsync(jpVocabText, settings)
+    .then(function(xhr) {
+      var res = xhr.responseText;
+      if (!res) {
+        return Promise.reject('responseText missing');
+      }
+      handleForvoSuccess(listItem, res);
+    })
+    .catch(function(e) {
+      Log.error('Forvo API error', e);
+    });
 }
 
 if (document.readyState === 'complete') {
