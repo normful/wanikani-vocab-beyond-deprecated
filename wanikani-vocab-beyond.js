@@ -865,7 +865,6 @@ function handleForvoSuccess(listItem, res) {
 
   var forvoItems = parsedForvoJson.items;
   if (!forvoItems || forvoItems.length == 0) {
-    Log.error('no forvoItems');
     return;
   }
 
