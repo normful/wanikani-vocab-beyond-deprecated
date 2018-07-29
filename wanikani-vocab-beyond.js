@@ -13,6 +13,8 @@
 // @connect     apifree.forvo.com
 // ==/UserScript==
 
+// TODO: add @updateURL and @downloadURL
+
 var DISABLE_ALL_LOGGING = false;
 
 var DISABLE_FORVO = false;
