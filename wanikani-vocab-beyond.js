@@ -987,8 +987,8 @@ function handleForvoSuccess(res, listItem, settings) {
     if (settings.show_forvo_usernames) {
       var usernameEl = $('<span>');
       usernameEl.text(forvoItem.username);
-      usernameEl.css('fontSize', '14px');
-      usernameEl.css('color', '#cccccc');
+      usernameEl.css('fontSize', '12px');
+      usernameEl.css('color', '#888888');
       usernameEl.css('margin', '0');
       usernameEl.css('padding', '0');
       audioContainer.prepend(usernameEl);
