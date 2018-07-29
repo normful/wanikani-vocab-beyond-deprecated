@@ -3,11 +3,7 @@
 // @namespace   normful
 // @description Shows WWWJDIC vocab with Forvo audio for each kanji in lessons, reviews, and kanji pages. A paid Forvo API key is required for audio.
 // @version     0.0.31
-// @include     http*://*wanikani.com/kanji/*
-// @include     http*://*wanikani.com/level/*/kanji/*
-// @include     http*://*wanikani.com/review/session
-// @include     http*://*wanikani.com/lesson/session
-// @include     http*://*wanikani.com/settings/*
+// @include     https://www.wanikani.com/*
 // @copyright   2018+, Norman Sue
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-end
@@ -413,6 +409,10 @@ function onSettingsSave(wkof) {
 
 function doInsertIntoPage(wkof, settings) {
   determinePageType();
+
+  if (curPage === PageEnum.unknown) {
+    return;
+  }
 
   unsafeWindow[windowProp] = createEmptyVocabSection(wkof, settings);
 
