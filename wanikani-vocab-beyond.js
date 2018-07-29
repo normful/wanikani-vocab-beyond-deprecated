@@ -335,6 +335,26 @@ function onSettingsMenuLinkClick(wkof) {
             html:
               "<p>(WaniKani Vocab Beyond will work without a Forvo API key, but you won't be able to see audio controls for vocabulary.)</p>",
           },
+
+          forvo_divider_id: {
+            type: 'divider',
+          },
+
+          forvo_rating_instructions: {
+            type: 'html',
+            html:
+              '<p>Forvo pronunciations are voted on by users. Change this to limit the displayed audio to those with at least this overall number of (upvotes - downvotes). Zero is the default and recommended value.</p>',
+          },
+
+          forvo_min_rating: {
+            type: 'number',
+            label: 'Minimum Forvo rating',
+            hover_tip:
+              'Only show Forvo pronunciations with at least this rating',
+            placeholder: 0,
+            default: 0,
+            full_width: false,
+          },
         },
       },
 
@@ -820,7 +840,13 @@ function extractJpVocabText(jpText) {
   return matches[0];
 }
 
-function callForvoApiAsync(jpVocabText, forvoApiKey) {
+function callForvoApiAsync(jpVocabText, settings) {
+  if (!settings.forvo_api_key) {
+    return;
+  }
+
+  var forvoApiKey = settings.forvo_api_key;
+
   var forvoUrl =
     'https://apifree.forvo.com/key/' +
     forvoApiKey +
@@ -829,7 +855,8 @@ function callForvoApiAsync(jpVocabText, forvoApiKey) {
     '/word/' +
     encodeURIComponent(jpVocabText) +
     '/language/ja' +
-    '/rate/0' +
+    '/rate/' +
+    String(settings.forvo_min_rating) +
     '/country/JPN' +
     '/order/rate-desc';
 
@@ -893,11 +920,7 @@ function handleForvoSuccess(listItem, res) {
 
 function addForvoAudioForThisWord(jpVocabText, listItem, wkof) {
   wkof.Settings.load(settings_script_id).then(function(settings) {
-    if (!settings.forvo_api_key) {
-      return;
-    }
-
-    callForvoApiAsync(jpVocabText, settings.forvo_api_key)
+    callForvoApiAsync(jpVocabText, settings)
       .then(function(xhr) {
         var res = xhr.responseText;
         if (!res) {
